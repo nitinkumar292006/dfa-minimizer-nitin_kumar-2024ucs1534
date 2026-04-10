@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DFA Minimizer — Automata Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<header>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="3" stroke="#63b3ed" stroke-width="1.5"/><path d="M9 2v2M9 14v2M2 9h2M14 9h2M4.2 4.2l1.4 1.4M12.4 12.4l1.4 1.4M4.2 13.8l1.4-1.4M12.4 5.6l1.4-1.4" stroke="#63b3ed" stroke-width="1.2" stroke-linecap="round"/></svg>
+    </div>
+    <div>
+      <div class="logo-text">AUTOMATA LAB</div>
+      <div class="logo-sub">DFA Minimization Engine</div>
+    </div>
+  </div>
+  <div class="header-badges">
+    <span class="badge badge-blue">Table Filling</span>
+    <span class="badge badge-purple">Partition Refinement</span>
+  </div>
+</header>
+
+<div class="app">
+  <!-- INPUT MODE -->
+  <div class="section">
+    <div class="section-title">Input Mode</div>
+    <div class="section-cols">
+      <div class="section-col">
+        <div class="mode-tabs">
+          <button class="mode-tab active" id="tab-table" onclick="switchMode('table')">Transition Table</button>
+          <button class="mode-tab" id="tab-draw" onclick="switchMode('draw')">Canvas Draw</button>
+        </div>
+      </div>
+      <div class="section-col">
+        <div class="presets">
+          <span style="font-size:11px;color:var(--muted);font-family:var(--mono);padding:4px 0;">Load example:</span>
+          <button class="preset-btn" onclick="loadPreset('basic')">Basic 4-state</button>
+          <button class="preset-btn" onclick="loadPreset('mod3')">MOD-3 Counter</button>
+          <button class="preset-btn" onclick="loadPreset('complex')">Even-0s DFA</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DFA DEFINITION -->
+  <div class="section" id="table-mode">
+    <div class="section-title">DFA Definition</div>
+    <div class="input-grid">
+      <div class="input-group">
+        <label class="input-label">States (comma-separated)</label>
+        <input class="input-field" id="inp-states" placeholder="q0,q1,q2,q3" value="q0,q1,q2,q3,q4">
+        </div>
+      <div class="input-group">
+        <label class="input-label">Alphabet (comma-separated)</label>
+        <input class="input-field" id="inp-alpha" placeholder="0,1" value="0,1">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Start State</label>
+        <input class="input-field" id="inp-start" placeholder="q0" value="q0">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Final States (comma-separated)</label>
+        <input class="input-field" id="inp-final" placeholder="q3,q4" value="q3,q4">
+      </div>
+    </div>
+    <div style="margin-top:1rem;">
+      <button class="btn btn-primary btn-sm" onclick="buildTable()">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1h4v4H1zM7 1h4v4H7zM1 7h4v4H1zM7 7h4v4H7z" stroke="currentColor" stroke-width="1.2"/></svg>
+        Build Transition Table
+      </button>
+    </div>
+    <div class="tt-wrapper" id="trans-table-wrapper"></div>
+    <div class="warning-list" id="warnings"></div>
+  </div>
+
+  <!-- CANVAS DRAW MODE -->
+  <div class="section" id="draw-mode" style="display:none;">
+    <div class="section-title">Canvas Draw</div>
+    <div id="draw-toolbar">
+      <button class="draw-tool active" id="dt-state" onclick="setDrawTool('state')">+ State</button>
+      <button class="draw-tool" id="dt-final" onclick="setDrawTool('final')">+ Final State</button>
+      <button class="draw-tool" id="dt-edge" onclick="setDrawTool('edge')">→ Transition</button>
+      <button class="draw-tool" id="dt-del" onclick="setDrawTool('delete')">✕ Delete</button>
+      <button class="draw-tool" onclick="clearCanvas()" style="margin-left:auto">Clear</button>
+      <button class="draw-tool" onclick="buildFromCanvas()">Apply</button>
+    </div>
+    <canvas id="draw-canvas" width="800" height="280"></canvas>
+    <div style="margin-top:6px;font-size:11px;color:var(--muted);font-family:var(--mono);">
+      Tip: Add states → mark finals → add transitions by clicking source then target state
+    </div>
+  </div>
+
+  <!-- ALGORITHM SELECTION -->
+  <div class="section">
+    <div class="section-title">Algorithm Selection</div>
+    <div class="algo-pills">
+      <button class="algo-pill active" id="algo-table" onclick="selectAlgo('table')">
+        Table Filling (Myhill–Nerode)
+      </button>
+      <button class="algo-pill" id="algo-partition" onclick="selectAlgo('partition')">
+        Partition Refinement (Hopcroft)
+      </button>
+    </div>
+    <div style="margin-top:10px;font-size:12px;color:var(--muted);max-width:600px;" id="algo-desc">
+      Marks pairs of distinguishable states using a lower-triangular matrix. States not marked are equivalent and can be merged.
+    </div>
+  </div>
+
+  <!-- ACTION BAR -->
+  <div class="action-bar">
+    <button class="btn btn-primary" id="btn-minimize" onclick="startMinimization()">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Minimize DFA
+    </button>
+    <button class="btn btn-accent" id="btn-next" onclick="nextStep()" disabled>Next Step →</button>
+    <button class="btn btn-accent btn-sm" id="btn-prev" onclick="prevStep()" disabled>← Prev</button>
+    <button class="btn btn-sm" id="btn-auto" onclick="autoPlay()" disabled style="border-color:var(--amber);color:var(--amber);">▶ Auto</button>
+    <button class="btn btn-sm" id="btn-3d" onclick="toggle3D()" disabled style="border-color:var(--accent2);color:var(--accent2);">◈ 3D View</button>
+    <div style="margin-left:auto;font-size:11px;color:var(--muted);font-family:var(--mono);" id="status-text">Ready to minimize</div>
+  </div>
+
+  <!-- STEP PANEL -->
+  <div class="step-panel" id="step-panel">
+    <div class="step-nav">
+      <span class="step-counter" id="step-counter">Step 0 / 0</span>
+      <div class="step-progress"><div class="step-progress-bar" id="step-bar" style="width:0%"></div></div>
+    </div>
+    <div class="step-content fade-in" id="step-content">
+      <div class="step-title">READY</div>
+      <div class="step-desc">Configure your DFA above and press "Minimize DFA" to begin the step-by-step process.</div>
+    </div>
+  </div>
+
+  <!-- 3-PANEL VISUALIZATION -->
+  <div class="viz-container" id="viz-container">
+    <div class="viz-panel">
+      <div class="viz-panel-header">
+        <span class="viz-panel-title blue">◈ Original DFA</span>
+        <span id="orig-state-count" style="font-size:10px;color:var(--muted);font-family:var(--mono);"></span>
+      </div>
+      <div class="cy-container" id="cy-orig"></div>
+    </div>
+    <div class="viz-panel">
+      <div class="viz-panel-header">
+        <span class="viz-panel-title purple">⚙ Algorithm Visualization</span>
+        <span style="font-size:10px;color:var(--muted);font-family:var(--mono);" id="algo-viz-label">—</span>
+      </div>
+      <div id="algo-center"></div>
+    </div>
+    <div class="viz-panel">
+      <div class="viz-panel-header">
+        <span class="viz-panel-title green">◆ Minimized DFA</span>
+        <span id="min-state-count" style="font-size:10px;color:var(--muted);font-family:var(--mono);"></span>
+      </div>
+      <div class="cy-container" id="cy-min"></div>
+    </div>
+  </div>
+
+  <!-- 3D VIEW (hidden until complete) -->
+  <div id="three-canvas-container" class="viz-panel" style="width:100%;">
+    <div class="viz-panel-header">
+      <span class="viz-panel-title purple">◈ 3D Minimized DFA</span>
+      <button class="btn btn-sm btn-red" onclick="toggle3D()" style="font-size:10px;padding:4px 8px;">Close 3D</button>
+    </div>
+    <canvas id="threeCanvas"></canvas>
+  </div>
+
+  <!-- COMPARISON -->
+  <div class="comparison-bar" id="comparison-bar" style="display:none;">
+    <div class="comp-stat">
+      <span class="comp-stat-label">ORIGINAL STATES</span>
+      <span class="comp-stat-value" id="cmp-orig">—</span>
+    </div>
+    <div class="arrow-anim">→</div>
+    <div class="comp-stat">
+      <span class="comp-stat-label">MINIMIZED STATES</span>
+      <span class="comp-stat-value" id="cmp-min">—</span>
+    </div>
+    <div class="comp-stat" style="margin-left:16px;">
+      <span class="comp-stat-label">REDUCTION</span>
+      <span class="comp-stat-value" id="cmp-pct" style="color:var(--amber);">—</span>
+    </div>
+    <div class="equiv-info" id="equiv-info"></div>
+  </div>
+
+  <!-- STRING SIMULATOR -->
+  <div class="sim-section">
+    <div class="section-title">String Simulator</div>
+    <div class="inline-flex">
+      <input class="input-field" id="sim-input" placeholder="Enter string, e.g. 0110" style="width:200px;" onkeydown="if(event.key==='Enter')runSim()">
+      <button class="btn btn-primary btn-sm" onclick="runSim()">▶ Simulate</button>
+      <button class="btn btn-sm" onclick="resetSim()" style="border-color:var(--muted);color:var(--muted);">Reset</button>
+    </div>
+    <div id="sim-results" style="margin-top:12px;"></div>
+  </div>
+
+  <!-- EXPORT -->
+  <div class="export-bar">
+    <span style="font-size:11px;color:var(--muted);font-family:var(--mono);">EXPORT</span>
+    <button class="btn btn-sm btn-primary" onclick="exportPNG()">📸 PNG</button>
+    <button class="btn btn-sm btn-primary" onclick="exportJSON()">📄 JSON</button>
+    <button class="btn btn-sm btn-accent" onclick="exportOrigJSON()">📄 Original JSON</button>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script src="./script.js"></script>
+</body>
+</html>
