@@ -32,6 +32,7 @@ const PRESETS = {
             q4: { '0': 'q1', '1': 'q2' }
         }
     },
+
     mod3: {
         states: 'A,B,C,D,E',
         alpha: '0,1',
@@ -39,24 +40,21 @@ const PRESETS = {
         finals: 'A,D',
         transitions: {
             A: { '0': 'A', '1': 'B' },
-            B: { '0': 'C', '1': 'A' },
-            C: { '0': 'B', '1': 'C' },
-            D: { '0': 'D', '1': 'E' },
-            E: { '0': 'A', '1': 'D' }
+            B: { '0': 'B', '1': 'C' },
+            C: { '0': 'C', '1': 'A' },
+            D: { '0': 'A', '1': 'B' },  // same as A (duplicate)
+            E: { '0': 'B', '1': 'C' }   // same as B (duplicate)
         }
     },
+
     complex: {
-        states: 'q0,q1,q2,q3,q4,q5',
+        states: 'q0,q1',
         alpha: '0,1',
         start: 'q0',
-        finals: 'q0,q2,q4',
+        finals: 'q0',
         transitions: {
-            q0: { '0': 'q2', '1': 'q1' },
-            q1: { '0': 'q3', '1': 'q0' },
-            q2: { '0': 'q0', '1': 'q3' },
-            q3: { '0': 'q1', '1': 'q2' },
-            q4: { '0': 'q2', '1': 'q5' },
-            q5: { '0': 'q4', '1': 'q2' }
+            q0: { '0': 'q1', '1': 'q0' },
+            q1: { '0': 'q0', '1': 'q1' }
         }
     }
 };
@@ -81,14 +79,59 @@ function loadPreset(name) {
 
 // ==================== MODE SWITCH ====================
 function switchMode(mode) {
-    document.getElementById('table-mode').style.display = mode === 'table' ? '' : 'none';
-    document.getElementById('draw-mode').style.display = mode === 'draw' ? '' : 'none';
-    document.getElementById('tab-table').classList.toggle('active', mode === 'table');
-    document.getElementById('tab-draw').classList.toggle('active', mode === 'draw');
-    if (mode === 'draw') initDrawCanvas();
+
+    // hide all
+    document.getElementById('table-mode').style.display = 'none';
+    document.getElementById('draw-mode').style.display = 'none';
+    document.getElementById('regex-mode').style.display = 'none';
+
+    // reset tabs
+    document.getElementById('tab-table').classList.remove('active');
+    document.getElementById('tab-draw').classList.remove('active');
+    document.getElementById('tab-regex').classList.remove('active');
+
+    // ALSO hide algo section initially
+    const algoSec = document.getElementById('algo-section');
+    if (algoSec) algoSec.style.display = 'none';
+
+    // show selected
+    if (mode === 'table') {
+        document.getElementById('table-mode').style.display = 'block';
+        document.getElementById('tab-table').classList.add('active');
+    }
+
+    else if (mode === 'draw') {
+        document.getElementById('draw-mode').style.display = 'block';
+        document.getElementById('tab-draw').classList.add('active');
+        initDrawCanvas();
+    }
+
+    else if (mode === 'regex') {
+        document.getElementById('regex-mode').style.display = 'block';
+        document.getElementById('tab-regex').classList.add('active');
+    }
+}
+// ==================== BUILD TABLE ====================
+
+function getReachable(dfa) {
+    const visited = new Set();
+    const stack = [dfa.start];
+
+    while (stack.length) {
+        const s = stack.pop();
+        if (!visited.has(s)) {
+            visited.add(s);
+
+            dfa.alpha.forEach(a => {
+                const next = dfa.transitions[s]?.[a];
+                if (next) stack.push(next);
+            });
+        }
+    }
+
+    return visited;
 }
 
-// ==================== BUILD TABLE ====================
 function buildTable() {
     const states = document.getElementById('inp-states').value.split(',').map(s => s.trim()).filter(Boolean);
     const alpha = document.getElementById('inp-alpha').value.split(',').map(s => s.trim()).filter(Boolean);
@@ -146,17 +189,45 @@ function validateDFA(d) {
     return msgs;
 }
 
-function getReachable(d) {
-    const visited = new Set([d.start]);
-    const queue = [d.start];
-    while (queue.length) {
-        const s = queue.shift();
-        d.alpha.forEach(a => {
-            const t = d.transitions[s]?.[a];
-            if (t && !visited.has(t)) { visited.add(t); queue.push(t); }
-        });
+function removeUnreachable(dfa) {
+    const visited = new Set();
+    const stack = [dfa.start];
+
+    while (stack.length) {
+        const s = stack.pop();
+
+        if (!visited.has(s)) {
+            visited.add(s);
+
+            dfa.alpha.forEach(a => {
+                const next = dfa.transitions[s]?.[a];
+                if (next) stack.push(next);
+            });
+        }
     }
-    return visited;
+
+    const newStates = dfa.states.filter(s => visited.has(s));
+
+    const newTransitions = {};
+    newStates.forEach(s => {
+        newTransitions[s] = {};
+        dfa.alpha.forEach(a => {
+            const next = dfa.transitions[s]?.[a];
+            if (next && visited.has(next)) {
+                newTransitions[s][a] = next;
+            }
+        });
+    });
+
+    const newFinals = dfa.finals.filter(s => visited.has(s));
+
+    return {
+        states: newStates,
+        alpha: dfa.alpha,
+        start: dfa.start,
+        finals: newFinals,
+        transitions: newTransitions
+    };
 }
 
 function showWarnings(msgs) {
@@ -167,15 +238,17 @@ function showWarnings(msgs) {
   </div>`).join('');
 }
 
-// ==================== ALGO SELECTION ====================
 function selectAlgo(a) {
     selectedAlgo = a;
+
     document.getElementById('algo-table').classList.toggle('active', a === 'table');
     document.getElementById('algo-partition').classList.toggle('active', a === 'partition');
+
     const descs = {
-        table: 'Marks pairs of distinguishable states using a lower-triangular matrix. States not marked are equivalent and can be merged.',
-        partition: "Iteratively refines partitions of states. Starts with {final, non-final} and splits groups whose members behave differently."
+        table: 'Marks pairs of distinguishable states...',
+        partition: 'Iteratively refines partitions...'
     };
+
     document.getElementById('algo-desc').textContent = descs[a];
 }
 
@@ -433,6 +506,7 @@ function renderCytoscape(containerId, d, highlightStates = [], isMin = false, me
     const el = document.getElementById(containerId);
     if (!el) return null;
     el.innerHTML = '';
+
     const nodes = d.states.map(s => ({
         data: {
             id: s,
@@ -443,6 +517,7 @@ function renderCytoscape(containerId, d, highlightStates = [], isMin = false, me
             highlight: highlightStates.includes(s)
         }
     }));
+
     const edgeMap = {};
     d.states.forEach(s => {
         d.alpha.forEach(a => {
@@ -454,6 +529,7 @@ function renderCytoscape(containerId, d, highlightStates = [], isMin = false, me
             }
         });
     });
+
     const edges = Object.values(edgeMap).map((e, i) => ({
         data: { id: `e${i}`, source: e.from, target: e.to, label: e.labels.join(',') }
     }));
@@ -465,21 +541,50 @@ function renderCytoscape(containerId, d, highlightStates = [], isMin = false, me
             {
                 selector: 'node',
                 style: {
-                    'background-color': n => n.data('highlight') ? 'rgba(245,158,11,0.2)' : (isMin ? 'rgba(16,185,129,0.12)' : 'rgba(99,179,237,0.1)'),
+                    'background-color': n =>
+                        n.data('highlight') ? 'rgba(245,158,11,0.2)'
+                            : (isMin ? 'rgba(16,185,129,0.12)' : 'rgba(99,179,237,0.1)'),
+
                     'border-width': n => n.data('isFinal') ? 3 : 1.5,
-                    'border-color': n => n.data('highlight') ? '#f59e0b' : (isMin ? '#10b981' : '#63b3ed'),
+
+                    'border-color': n =>
+                        n.data('highlight') ? '#f59e0b'
+                            : (isMin ? '#10b981' : '#63b3ed'),
+
                     'border-style': 'solid',
-                    'label': n => n.data('merged') !== n.data('label') ? `${n.data('label')}\n{${n.data('merged')}}` : n.data('label'),
+
+                    // 🔥 FIXED LABEL (NO OVERLAP)
+                    'label': n => {
+                        const merged = n.data('merged').split(',');
+
+                        if (merged.length > 3) {
+                            return `${n.data('label')}\n{${merged.slice(0, 2).join(',')}...}`;
+                        }
+
+                        return n.data('merged') !== n.data('label')
+                            ? `${n.data('label')}\n{${n.data('merged')}}`
+                            : n.data('label');
+                    },
+
                     'color': '#e2e8f0',
                     'font-family': 'Space Mono, monospace',
-                    'font-size': '11px',
+
+                    // 🔥 FONT FIX
+                    'font-size': '9px',
+
                     'text-valign': 'center',
                     'text-halign': 'center',
-                    'width': 42, 'height': 42,
+
+                    // 🔥 BIGGER NODE
+                    'width': 55,
+                    'height': 55,
+
                     'text-wrap': 'wrap',
-                    'text-max-width': '80px',
-                    'shape': 'ellipse',
-                    'box-shadow': '0 0 10px rgba(99,179,237,0.4)',
+
+                    // 🔥 LIMIT WIDTH
+                    'text-max-width': '50px',
+
+                    'shape': 'ellipse'
                 }
             },
             {
@@ -509,35 +614,50 @@ function renderCytoscape(containerId, d, highlightStates = [], isMin = false, me
             },
             {
                 selector: 'edge[source = target]',
-                style: { 'curve-style': 'loop', 'loop-direction': '-45deg', 'loop-sweep': '45deg' }
+                style: {
+                    'curve-style': 'loop',
+                    'loop-direction': '-45deg',
+                    'loop-sweep': '45deg'
+                }
             }
         ],
+
+        // 🔥 FIXED LAYOUT (NO OVERLAP)
         layout: {
-            name: d.states.length <= 4 ? 'circle' : 'cose',
-            padding: 20,
+            name: 'cose',
+            padding: 30,
             animate: true,
             animationDuration: 500,
             nodeDimensionsIncludeLabels: true,
-            idealEdgeLength: 80,
-            nodeRepulsion: 4096
+            idealEdgeLength: 120,
+            nodeRepulsion: 8000
         },
+
         userZoomingEnabled: true,
         userPanningEnabled: true
     });
 
-    // Tooltip
+    // Tooltip (unchanged)
     cy.on('mouseover', 'node', e => {
         const n = e.target;
         const tip = document.getElementById('tooltip');
-        tip.innerHTML = `<b>${n.data('id')}</b>${n.data('isStart') ? ' ◀ Start' : ''}${n.data('isFinal') ? ' ● Final' : ''}${n.data('merged') !== n.data('label') ? '<br>Merged: ' + n.data('merged') : ''}`;
+        tip.innerHTML = `<b>${n.data('id')}</b>
+            ${n.data('isStart') ? ' ◀ Start' : ''}
+            ${n.data('isFinal') ? ' ● Final' : ''}
+            ${n.data('merged') !== n.data('label') ? '<br>Merged: ' + n.data('merged') : ''}`;
         tip.style.display = 'block';
     });
-    cy.on('mouseout', 'node', () => { document.getElementById('tooltip').style.display = 'none'; });
+
+    cy.on('mouseout', 'node', () => {
+        document.getElementById('tooltip').style.display = 'none';
+    });
+
     cy.on('mousemove', e => {
         const tip = document.getElementById('tooltip');
         tip.style.left = (e.originalEvent.clientX + 12) + 'px';
         tip.style.top = (e.originalEvent.clientY - 10) + 'px';
     });
+
     return cy;
 }
 
@@ -554,6 +674,16 @@ function renderAlgoViz(step, states) {
     document.getElementById('algo-viz-label').textContent = step.title || '—';
 }
 
+function formatStateLabel(s) {
+    const parts = s.split(',');
+
+    if (parts.length > 4) {
+        return parts.slice(0, 2).join(',') + '\n...';
+    }
+
+    return parts.join('\n');
+}
+
 function renderMatrix(container, step, states) {
     if (!states || !states.length) return;
     const n = states.length;
@@ -566,13 +696,13 @@ function renderMatrix(container, step, states) {
     html += `<div style="display:flex;gap:2px;">`;
     html += `<div style="width:${cellSize + 20}px;height:${cellSize}px;"></div>`;
     for (let j = 0; j < n - 1; j++) {
-        html += `<div class="matrix-cell header" style="width:${cellSize}px;height:${cellSize}px;font-size:${Math.max(8, cellSize / 3.5)}px;">${states[j]}</div>`;
+        html += `<div class="matrix-cell header matrix-label" style="width:${cellSize}px;height:${cellSize}px;font-size:${Math.max(8, cellSize / 3.5)}px;">${formatStateLabel(states[j])}</div>`;
     }
     html += `</div>`;
 
     for (let i = 1; i < n; i++) {
         html += `<div style="display:flex;gap:2px;">`;
-        html += `<div class="matrix-cell header" style="width:${cellSize + 20}px;height:${cellSize}px;font-size:${Math.max(8, cellSize / 3.5)}px;">${states[i]}</div>`;
+        html += `<div class="matrix-cell header" style="width:${cellSize + 20}px;height:${cellSize}px;font-size:${Math.max(8, cellSize / 3.5)}px;">${formatStateLabel(states[i])}</div>`;
         for (let j = 0; j < i; j++) {
             const isHighlight = step.highlight?.some(h => h[0] === i && h[1] === j);
             const isMarked = step.matrix[i][j];
@@ -611,25 +741,32 @@ function renderPartition(container, step) {
 
 // ==================== MAIN MINIMIZE ====================
 function startMinimization() {
-    clearSim();
-    is3D = false;
-    document.getElementById('three-canvas-container').classList.remove('active');
-    document.getElementById('btn-3d').disabled = true;
 
-    dfa = parseDFA();
-    const warnings = validateDFA(dfa);
-    showWarnings(warnings);
-    if (warnings.some(w => w.type === 'error')) {
-        setStatus('Fix errors before minimizing', 'var(--red)');
+    clearSim();
+
+    const isRegexMode = document.getElementById('tab-regex').classList.contains('active');
+
+    let localDFA;
+
+    if (isRegexMode && window.regexDFA) {
+        localDFA = JSON.parse(JSON.stringify(window.regexDFA));
+    } else {
+        localDFA = parseDFA();
+    }
+
+    if (!localDFA || !localDFA.states.length) {
+        alert("DFA not defined properly");
         return;
     }
 
-    // Render original
-    document.getElementById('orig-state-count').textContent = `${dfa.states.length} states`;
-    cyOrig = renderCytoscape('cy-orig', dfa, [], false);
+    dfa = localDFA;
 
-    // Run algorithm
+    // 🔥 ALWAYS show original DFA FIRST
+    cyOrig = renderCytoscape('cy-orig', dfa, [], false);
+    document.getElementById('orig-state-count').textContent = `${dfa.states.length} states`;
+
     let result;
+
     if (selectedAlgo === 'table') {
         result = runTableFilling(dfa);
     } else {
@@ -639,21 +776,22 @@ function startMinimization() {
     steps = result.steps;
     const equiv = result.equiv;
 
-    // Build minimized DFA
     minDfa = buildMinimizedDFA(dfa, equiv);
 
-    // Store for steps rendering
-    window._minEquiv = equiv;
     window._algStates = result.states;
 
     currentStep = 0;
     updateStepUI();
 
+    // enable buttons
     document.getElementById('btn-next').disabled = false;
     document.getElementById('btn-prev').disabled = false;
     document.getElementById('btn-auto').disabled = false;
-    setStatus(`${steps.length} steps computed`, 'var(--green)');
+    document.getElementById('btn-3d').disabled = false;
+
+    setStatus("Minimization ready 🚀", "var(--green)");
 }
+
 
 function updateStepUI() {
     if (!steps.length) return;
@@ -672,7 +810,7 @@ function updateStepUI() {
     renderAlgoViz(step, window._algStates);
 
     // Show minimized DFA on last step
-    if (currentStep === steps.length - 1 && minDfa) {
+    if (minDfa) {
         cyMin = renderCytoscape('cy-min', minDfa, [], true, minDfa.stateLabels);
         document.getElementById('min-state-count').textContent = `${minDfa.states.length} states`;
         showComparison();
@@ -734,17 +872,54 @@ function runSim() {
     const container = document.getElementById('sim-results');
     if (!dfa.start) { container.innerHTML = '<div class="warning-item warning-warn">⚠ Define and minimize a DFA first.</div>'; return; }
 
+    // const simulateDFA = (d, s) => {
+    //     let state = d.start;
+    //     const path = [state];
+    //     for (const ch of s) {
+    //         if (!d.transitions[state]) return { accepted: false, path, error: `No transitions from ${state}` };
+    //         state = d.transitions[state][ch];
+    //         if (!state) return { accepted: false, path, error: `No transition on '${ch}'` };
+    //         path.push(state);
+    //     }
+    //     return { accepted: d.finals.includes(state), path };
+    // };
+
+
     const simulateDFA = (d, s) => {
         let state = d.start;
         const path = [state];
-        for (const ch of s) {
-            if (!d.transitions[state]) return { accepted: false, path, error: `No transitions from ${state}` };
+
+        for (let i = 0; i < s.length; i++) {
+            const ch = s[i].trim();
+
+            // invalid symbol
+            if (!d.alpha.includes(ch)) {
+                return {
+                    accepted: false,
+                    path,
+                    error: `Invalid symbol '${ch}'`
+                };
+            }
+
+            // missing transition
+            if (!d.transitions[state] || !d.transitions[state][ch]) {
+                return {
+                    accepted: false,
+                    path,
+                    error: `No transition from ${state} on '${ch}'`
+                };
+            }
+
             state = d.transitions[state][ch];
-            if (!state) return { accepted: false, path, error: `No transition on '${ch}'` };
             path.push(state);
         }
-        return { accepted: d.finals.includes(state), path };
+
+        return {
+            accepted: d.finals.includes(state),
+            path
+        };
     };
+
 
     const origResult = simulateDFA(dfa, str);
     const minResult = minDfa ? simulateDFA(minDfa, str) : null;
@@ -762,7 +937,10 @@ function runSim() {
         if (str.length === 0) h += `<div class="sim-char" style="opacity:0.3">ε</div>`;
         h += '</div>';
         h += `<div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:6px;">Path: ${res.path.join(' → ')}</div>`;
-        h += `<div class="sim-result ${res.accepted ? 'sim-accept' : 'sim-reject'}">${res.accepted ? '✓ ACCEPTED' : '✕ REJECTED'}</div>`;
+        h += `<div class="sim-result ${res.accepted ? 'sim-accept' : 'sim-reject'}">
+    ${res.error ? res.error + '<br>' : ''}
+    ${res.accepted ? '✓ ACCEPTED' : '✕ REJECTED'}
+        </div>`;
         h += `</div>`;
         return h;
     };
@@ -1101,6 +1279,302 @@ function buildFromCanvas() {
 
 // ==================== INIT ====================
 window.onload = () => {
+    switchMode('table');
     buildTable();
     loadPreset('basic');
 };
+
+
+
+
+function convertRegex() {
+    const regex = document.getElementById('regex-input').value.trim();
+    if (!regex) return alert("Enter regex");
+
+    const withConcat = addConcat(regex);
+    const postfix = regexToPostfix(withConcat);
+    const nfa = postfixToNFA(postfix);
+    let dfaBuilt = nfaToDFA(nfa);
+
+    // clean DFA
+    dfaBuilt = removeUnreachable(dfaBuilt);
+
+    window.regexDFA = dfaBuilt;
+
+    // show algorithm section
+    document.getElementById('algo-section').style.display = 'block';
+
+    setStatus("Regex ready → Click Minimize", "var(--green)");
+}
+
+
+
+
+
+
+function nfaToDFA(nfa) {
+
+    const dfaStates = [];
+    const dfaTrans = {};
+    const queue = [];
+
+    // 🔹 epsilon closure
+    function epsilonClosure(states) {
+        const stack = [...states];
+        const closure = new Set(states);
+
+        while (stack.length) {
+            const state = stack.pop();
+
+            const eps = nfa.transitions[state]?.['ε'] || [];
+
+            eps.forEach(n => {
+                if (!closure.has(n)) {
+                    closure.add(n);
+                    stack.push(n);
+                }
+            });
+        }
+
+        return closure;
+    }
+
+    // 🔹 start state
+    const startClosure = epsilonClosure([nfa.start]);
+    let startState = [...startClosure].sort().join(',');
+    if (!startState) startState = 'DEAD';
+
+    queue.push(startState);
+    dfaStates.push(startState);
+
+    // 🔹 build DFA
+    while (queue.length > 0) {
+
+        const current = queue.shift();
+        const currentSet = current === 'DEAD' ? [] : current.split(',');
+
+        dfaTrans[current] = {};
+
+        for (const sym of nfa.alpha) {
+
+            let moveSet = new Set();
+
+            currentSet.forEach(s => {
+                const next = nfa.transitions[s]?.[sym] || [];
+                next.forEach(n => moveSet.add(n));
+            });
+
+            const closure = epsilonClosure([...moveSet]);
+            let newState = [...closure].sort().join(',');
+
+            // 🔥 DEAD fix
+            if (!newState) newState = 'DEAD';
+
+            if (!dfaStates.includes(newState)) {
+                dfaStates.push(newState);
+                queue.push(newState);
+            }
+
+            dfaTrans[current][sym] = newState;
+        }
+    }
+
+    // 🔥 DEAD loop
+    if (dfaStates.includes('DEAD')) {
+        dfaTrans['DEAD'] = {};
+        nfa.alpha.forEach(sym => {
+            dfaTrans['DEAD'][sym] = 'DEAD';
+        });
+    }
+
+    // 🔹 final states
+    const dfaFinals = dfaStates.filter(st =>
+        st !== 'DEAD' &&
+        st.split(',').some(s => nfa.finals.includes(s))
+    );
+
+    return {
+        states: dfaStates,
+        alpha: nfa.alpha,
+        start: startState,
+        finals: dfaFinals,
+        transitions: dfaTrans
+    };
+}
+
+
+
+function regexToPostfix(regex) {
+    const output = [];
+    const stack = [];
+
+    const precedence = {
+        '*': 3,
+        '.': 2,
+        '|': 1
+    };
+
+    for (let i = 0; i < regex.length; i++) {
+        const c = regex[i];
+
+        if (c === '0' || c === '1') {
+            output.push(c);
+        }
+
+        else if (c === '(') {
+            stack.push(c);
+        }
+
+        else if (c === ')') {
+            while (stack.length && stack[stack.length - 1] !== '(') {
+                output.push(stack.pop());
+            }
+            stack.pop(); // remove '('
+        }
+
+        else if (c === '*' || c === '.' || c === '|') {
+            while (
+                stack.length &&
+                precedence[stack[stack.length - 1]] >= precedence[c]
+            ) {
+                output.push(stack.pop());
+            }
+            stack.push(c);
+        }
+    }
+
+    while (stack.length) {
+        output.push(stack.pop());
+    }
+
+    return output.join('');
+}
+
+
+
+function postfixToNFA(postfix) {
+    let stack = [];
+    let count = 0;
+
+    function newState() { return 'q' + count++; }
+
+    function basic(sym) {
+        let s = newState(), e = newState();
+        return {
+            start: s,
+            end: e,
+            trans: { [s]: { [sym]: [e] } }
+        };
+    }
+
+    function mergeTrans(t1, t2) {
+        const res = JSON.parse(JSON.stringify(t1));
+
+        Object.keys(t2).forEach(state => {
+            if (!res[state]) res[state] = {};
+
+            Object.keys(t2[state]).forEach(sym => {
+                if (!res[state][sym]) res[state][sym] = [];
+                res[state][sym].push(...t2[state][sym]);
+            });
+        });
+
+        return res;
+    }
+
+    function concat(a, b) {
+        a.trans[a.end] = a.trans[a.end] || {};
+        a.trans[a.end]['ε'] = a.trans[a.end]['ε'] || [];
+        a.trans[a.end]['ε'].push(b.start);
+
+        return {
+            start: a.start,
+            end: b.end,
+            trans: mergeTrans(a.trans, b.trans)
+        };
+    }
+
+    function union(a, b) {
+        let s = newState(), e = newState();
+
+        return {
+            start: s,
+            end: e,
+            trans: mergeTrans(
+                {
+                    [s]: { 'ε': [a.start, b.start] },
+                    [a.end]: { 'ε': [e] },
+                    [b.end]: { 'ε': [e] }
+                },
+                mergeTrans(a.trans, b.trans)
+            )
+        };
+    }
+
+    function star(a) {
+        let s = newState(), e = newState();
+
+        return {
+            start: s,
+            end: e,
+            trans: mergeTrans(
+                {
+                    [s]: { 'ε': [a.start, e] },
+                    [a.end]: { 'ε': [a.start, e] }
+                },
+                a.trans
+            )
+        };
+    }
+
+    for (let c of postfix) {
+        if (/[01]/.test(c)) {
+            stack.push(basic(c));
+        } else if (c === '.') {
+            let b = stack.pop(), a = stack.pop();
+            stack.push(concat(a, b));
+        } else if (c === '|') {
+            let b = stack.pop(), a = stack.pop();
+            stack.push(union(a, b));
+        } else if (c === '*') {
+            let a = stack.pop();
+            stack.push(star(a));
+        }
+    }
+
+    let res = stack[0];
+
+    return {
+        states: Object.keys(res.trans),
+        alpha: ['0', '1'],
+        start: res.start,
+        finals: [res.end],
+        transitions: res.trans
+    };
+}
+
+function addConcat(regex) {
+    let result = "";
+
+    for (let i = 0; i < regex.length; i++) {
+        const c1 = regex[i];
+        const c2 = regex[i + 1];
+
+        result += c1;
+
+        if (
+            c1 && c2 &&
+            (c1 === '0' || c1 === '1' || c1 === ')' || c1 === '*') &&
+            (c2 === '0' || c2 === '1' || c2 === '(')
+        ) {
+            result += '.';
+        }
+    }
+
+    return result;
+}
+
+function startApp() {
+    document.getElementById('home-page').style.display = 'none';
+    document.querySelector('.app').style.display = 'block';
+}

@@ -34,7 +34,98 @@
     </div>
   </header>
 
-  <div class="app">
+
+  <!-- Home Page -->
+
+    <div id="home-page" class="home">
+
+      <div class="hero">
+        <h1 class="glow">DFA Minimization Visualizer</h1>
+        <p class="subtitle">Made By Nitin Kumar (2024UCS1534)</p>
+        <button class="start-btn" onclick="startApp()">🚀 Start Minimizing</button>
+      </div>
+
+      <div class="grid">
+
+        <!-- THEORY -->
+        <div class="card">
+          <h2>📘 DFA Minimization</h2>
+          <p>
+            DFA Minimization is a fundamental concept in <b>Theory of Computation</b>.
+            It reduces the number of states in a DFA while preserving its language.
+          </p>
+          <p>
+            The goal is to construct a <b>minimal DFA</b> that is equivalent to the original DFA.
+          </p>
+        </div>
+
+        <!-- WHY -->
+        <div class="card">
+          <h2>🎯 Why Minimization?</h2>
+          <ul>
+            <li>Reduces complexity</li>
+            <li>Improves performance</li>
+            <li>Eliminates redundant states</li>
+            <li>Used in compilers & pattern matching</li>
+          </ul>
+        </div>
+
+        <!-- MYHILL NERODE -->
+        <div class="card">
+          <h2>⚙️ Myhill–Nerode (Table Filling)</h2>
+          <p>
+            Based on equivalence relation between states.
+          </p>
+          <ul>
+            <li>Mark distinguishable state pairs</li>
+            <li>Propagate markings</li>
+            <li>Unmarked → equivalent</li>
+          </ul>
+        </div>
+
+        <!-- HOPCROFT -->
+        <div class="card">
+          <h2>⚡ Hopcroft Algorithm</h2>
+          <p>
+            Efficient partition-based minimization algorithm.
+          </p>
+          <ul>
+            <li>Split into final/non-final</li>
+            <li>Refine partitions</li>
+            <li>Time complexity: <b>O(n log n)</b></li>
+          </ul>
+        </div>
+
+        <!-- STEPS -->
+        <div class="card wide">
+          <h2>🧠 Step-by-Step Process</h2>
+          <ol>
+            <li>Remove unreachable states</li>
+            <li>Divide into final & non-final states</li>
+            <li>Check distinguishability</li>
+            <li>Merge equivalent states</li>
+            <li>Construct minimized DFA</li>
+          </ol>
+        </div>
+
+        <!-- EXAMPLE -->
+        <div class="card wide">
+          <h2>📊 Example</h2>
+          <p>
+            Original DFA: <b>5 states</b><br>
+            Minimized DFA: <b>3 states</b><br>
+            Reduction: <b>40%</b>
+          </p>
+          <p>
+            Equivalent Classes: {q0,q2}, {q1}, {q3,q4}
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+  <div class="app" style="display:none;">
+    
     <!-- INPUT MODE -->
     <div class="section">
       <div class="section-title">Input Mode</div>
@@ -43,6 +134,8 @@
           <div class="mode-tabs">
             <button class="mode-tab active" id="tab-table" onclick="switchMode('table')">Transition Table</button>
             <button class="mode-tab" id="tab-draw" onclick="switchMode('draw')">Canvas Draw</button>
+            <button class="mode-tab" id="tab-regex" onclick="switchMode('regex')">Regular expression
+            </button>
           </div>
         </div>
         <div class="section-col">
@@ -106,8 +199,25 @@
       </div>
     </div>
 
+    <!-- REGEX INPUT -->
+    <div class="section" id="regex-mode" style="display:none;">
+      <div class="section-title">Regex to DFA</div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <input class="input-field" id="regex-input" placeholder="Enter regex e.g. 01" style="width:250px;">
+
+        <button class="btn btn-primary btn-sm" onclick="convertRegex()">
+          Convert Regex → DFA
+        </button>
+      </div>
+
+      <div style="margin-top:6px;font-size:11px;color:var(--muted);font-family:var(--mono);">
+        Supports basic regex: 0,1 and *
+      </div>
+    </div>
+
     <!-- ALGORITHM SELECTION -->
-    <div class="section">
+    <div class="section" id="algo-section" style="display:none;">
       <div class="section-title">Algorithm Selection</div>
       <div class="algo-pills">
         <button class="algo-pill active" id="algo-table" onclick="selectAlgo('table')">
