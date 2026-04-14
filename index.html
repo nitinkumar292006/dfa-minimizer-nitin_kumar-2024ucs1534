@@ -37,95 +37,114 @@
 
   <!-- Home Page -->
 
-    <div id="home-page" class="home">
+  <div id="home-page" class="home">
 
-      <div class="hero">
-        <h1 class="glow">DFA Minimization Visualizer</h1>
-        <p class="subtitle">Made By Nitin Kumar (2024UCS1534)</p>
-        <button class="start-btn" onclick="startApp()">🚀 Start Minimizing</button>
-      </div>
-
-      <div class="grid">
-
-        <!-- THEORY -->
-        <div class="card">
-          <h2>📘 DFA Minimization</h2>
-          <p>
-            DFA Minimization is a fundamental concept in <b>Theory of Computation</b>.
-            It reduces the number of states in a DFA while preserving its language.
-          </p>
-          <p>
-            The goal is to construct a <b>minimal DFA</b> that is equivalent to the original DFA.
-          </p>
-        </div>
-
-        <!-- WHY -->
-        <div class="card">
-          <h2>🎯 Why Minimization?</h2>
-          <ul>
-            <li>Reduces complexity</li>
-            <li>Improves performance</li>
-            <li>Eliminates redundant states</li>
-            <li>Used in compilers & pattern matching</li>
-          </ul>
-        </div>
-
-        <!-- MYHILL NERODE -->
-        <div class="card">
-          <h2>⚙️ Myhill–Nerode (Table Filling)</h2>
-          <p>
-            Based on equivalence relation between states.
-          </p>
-          <ul>
-            <li>Mark distinguishable state pairs</li>
-            <li>Propagate markings</li>
-            <li>Unmarked → equivalent</li>
-          </ul>
-        </div>
-
-        <!-- HOPCROFT -->
-        <div class="card">
-          <h2>⚡ Hopcroft Algorithm</h2>
-          <p>
-            Efficient partition-based minimization algorithm.
-          </p>
-          <ul>
-            <li>Split into final/non-final</li>
-            <li>Refine partitions</li>
-            <li>Time complexity: <b>O(n log n)</b></li>
-          </ul>
-        </div>
-
-        <!-- STEPS -->
-        <div class="card wide">
-          <h2>🧠 Step-by-Step Process</h2>
-          <ol>
-            <li>Remove unreachable states</li>
-            <li>Divide into final & non-final states</li>
-            <li>Check distinguishability</li>
-            <li>Merge equivalent states</li>
-            <li>Construct minimized DFA</li>
-          </ol>
-        </div>
-
-        <!-- EXAMPLE -->
-        <div class="card wide">
-          <h2>📊 Example</h2>
-          <p>
-            Original DFA: <b>5 states</b><br>
-            Minimized DFA: <b>3 states</b><br>
-            Reduction: <b>40%</b>
-          </p>
-          <p>
-            Equivalent Classes: {q0,q2}, {q1}, {q3,q4}
-          </p>
-        </div>
-
-      </div>
+    <div class="hero">
+      <h1 class="glow">DFA Minimization Visualizer</h1>
+      <p class="subtitle">Made By Nitin Kumar (2024UCS1534)</p>
+      <button class="start-btn" onclick="startApp()">🚀 Start Minimizing</button>
     </div>
 
+    <div class="grid">
+
+      <!-- THEORY -->
+      <div class="card">
+        <h2>📘 DFA Minimization</h2>
+        <p>
+          DFA Minimization is a core concept in <b>Theory of Computation</b> that transforms a given DFA
+          into its <b>canonical (unique minimal form)</b> without changing the language it recognizes.
+        </p>
+        <p>
+          It ensures that no two states are <b>equivalent</b>, meaning every state is distinguishable
+          by at least one input string.
+        </p>
+        <p>
+          The minimized DFA is <b>optimal</b> — it has the least number of states possible for that language.
+        </p>
+      </div>
+
+      <!-- WHY -->
+      <div class="card">
+        <h2>🎯 Why Minimization?</h2>
+        <ul>
+          <li><b>Efficiency:</b> Fewer states → faster computation & less memory</li>
+          <li><b>Canonical Form:</b> Unique representation of a regular language</li>
+          <li><b>Optimization:</b> Removes redundant & duplicate states</li>
+          <li><b>Real-world Use:</b> Used in compilers, regex engines & digital circuits</li>
+        </ul>
+      </div>
+
+      <!-- MYHILL NERODE -->
+      <div class="card">
+        <h2>⚙️ Myhill–Nerode Theorem</h2>
+        <p>
+          This theorem defines an <b>equivalence relation</b> on strings:
+        </p>
+        <p>
+          Two states are equivalent if <b>no string can distinguish them</b>.
+        </p>
+        <ul>
+          <li>Mark distinguishable state pairs</li>
+          <li>Propagate markings using transitions</li>
+          <li>Unmarked pairs → equivalent → merge</li>
+        </ul>
+        <p>
+          This forms the theoretical foundation of DFA minimization.
+        </p>
+      </div>
+
+      <!-- HOPCROFT -->
+      <div class="card">
+        <h2>⚡Partition Refinement</h2>
+        <p>
+          The most efficient DFA minimization algorithm based on
+          <b>partition refinement</b>.
+        </p>
+        <ul>
+          <li>Start with {Final, Non-Final} partition</li>
+          <li>Split states based on transitions</li>
+          <li>Repeat until partitions stabilize</li>
+        </ul>
+        <p>
+          Time Complexity: <b>O(n log n)</b> (optimal)
+        </p>
+      </div>
+
+      <!-- STEPS -->
+      <div class="card wide">
+        <h2>🧠 Step-by-Step Process</h2>
+        <ol>
+          <li>Remove unreachable states (dead states)</li>
+          <li>Partition states into Final & Non-Final groups</li>
+          <li>Check distinguishability using transitions</li>
+          <li>Refine partitions until stable</li>
+          <li>Merge equivalent states</li>
+          <li>Construct the minimized DFA</li>
+        </ol>
+      </div>
+
+      <!-- EXAMPLE -->
+      <div class="card wide">
+        <h2>📊 Example</h2>
+        <p>
+          Original DFA: <b>5 states</b><br>
+          Minimized DFA: <b>3 states</b><br>
+          Reduction: <b>40%</b>
+        </p>
+        <p>
+          Equivalent Classes:<br>
+          <b>{q0,q2}, {q1}, {q3,q4}</b>
+        </p>
+        <p>
+          States within the same class behave identically for all inputs.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
   <div class="app" style="display:none;">
-    
+
     <!-- INPUT MODE -->
     <div class="section">
       <div class="section-title">Input Mode</div>
