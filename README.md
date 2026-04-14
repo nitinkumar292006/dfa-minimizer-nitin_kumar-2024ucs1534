@@ -1,4 +1,4 @@
-# 🚀 DFA Minimizer & Visualizer
+# DFA Minimizer & Visualizer
 
 > A modern interactive web tool to **minimize Deterministic Finite Automata (DFA)** with step-by-step visualization, simulation, and 3D rendering.
 
@@ -6,42 +6,55 @@
 
 # 🌐 Live project URL
 
-👉[https://dfa-minimizer-nitinkumar-2024ucs1534.netlify.app/](https://dfa-minimizer-nitinkumar-2024ucs1534.netlify.app/)
+[https://dfa-minimizer-nitinkumar-2024ucs1534.netlify.app/](https://dfa-minimizer-nitinkumar-2024ucs1534.netlify.app/)
 
 ---
 
-# ✨ Features
+#  Features
 
-- 🔵 Table Filling Algorithm (Myhill–Nerode)
-- 🟣 Partition Refinement Algorithm (Hopcroft)
-- 🎯 Step-by-step DFA minimization
-- 🌐 Interactive 2D DFA visualization
-- 🌌 3D DFA visualization
-- 🔍 String pattern simulator (accept/reject)
-- 📊 Original vs Minimized DFA comparison
-- 📤 Export DFA as PNG & JSON
-
----
-
-# 🧠 What is DFA Minimization?
-
-DFA Minimization is the process of reducing the number of states in a DFA **without changing the language it accepts**.
-
-### It removes:
-- Equivalent states
-- Unreachable states
-
-### Result:
-- Smaller DFA
-- Same behavior (language preserved)
+- Table Filling Algorithm (Myhill–Nerode)
+-  Partition Refinement Algorithm (Hopcroft)
+-  Step-by-step DFA minimization
+- Interactive 2D DFA visualization
+-  3D DFA visualization
+-  String pattern simulator (accept/reject)
+-  Original vs Minimized DFA comparison
+-  Export DFA as PNG & JSON
 
 ---
 
-# ⚙️ How to Use (Step-by-Step)
+## 📁 Project Structure
 
-## 🧪 Example Walkthrough
+```bash
+DFA-Minimizer-Visualizer/
+│
+├── index.html        # Main UI structure
+├── style.css         # Styling (UI design)
+├── script.js         # Core logic (DFA + Algorithms + Visualization)
+│
+└── README.md         # Documentation
 
-### 🔹 Input DFA
+```
+
+##  How to Run the Project
+
+Follow these steps to run the project on your system 👇
+
+### 1️⃣ Download / Clone Project
+
+```bash
+git clone https://github.com/nitinkumar292006/dfa-minimisation-visualizer.git
+```
+
+### 2 Open index.html in your browser
+
+---
+
+# ⚙️ How to Use the WebApp (Step-by-Step)
+
+##  Example Walkthrough
+
+###  Input DFA
 
 - **States:** A, B, C, D  
 - **Alphabet:** 0, 1  
@@ -50,7 +63,7 @@ DFA Minimization is the process of reducing the number of states in a DFA **with
 
 ---
 
-## 🔁 Transition Table
+##  Transition Table
 
 | State | 0 | 1 |
 |------|---|---|
@@ -61,22 +74,22 @@ DFA Minimization is the process of reducing the number of states in a DFA **with
 
 ---
 
-# 🎨 Input Modes (Dual Input System)
+# Input Modes (Dual Input System)
 
 This project provides **two flexible ways** to create a DFA:
 
 ---
 
-## 🧾 1. Transition Table Mode
+##  1. Transition Table Mode
 
-👉 Users can manually define DFA using a structured table.
+ Users can manually define DFA using a structured table.
 
 ### Steps:
 - Enter states, alphabet, start state, and final states  
 - Click **"Build Transition Table"**  
 - Fill transition values for each state  
 
-📌 Best for:
+ Best for:
 - Theory-based problems  
 - Exam practice  
 - Precise DFA definition  
@@ -85,18 +98,18 @@ This project provides **two flexible ways** to create a DFA:
 
 ---
 
-## 🎨 2. Canvas Draw Mode (Interactive)
+##  2. Canvas Draw Mode (Interactive)
 
-👉 Users can visually create DFA by drawing directly on canvas.
+ Users can visually create DFA by drawing directly on canvas.
 
 ### Features:
-- ➕ Add states  
-- ✅ Mark final states  
-- ➡️ Draw transitions between states  
-- ❌ Delete elements  
-- 🔄 Clear canvas  
+-  Add states  
+-  Mark final states  
+-  Draw transitions between states  
+-  Delete elements  
+-  Clear canvas  
 
-📌 How it works:
+ How it works:
 1. Click **"+ State"** to add nodes  
 2. Click **"+ Final State"** to mark accepting states  
 3. Use **"→ Transition"** to connect states  
@@ -106,8 +119,6 @@ This project provides **two flexible ways** to create a DFA:
 
 
 ---
-
-
 
 
 # ▶️ Steps to Use Website
@@ -137,21 +148,21 @@ We Use First input method Transition table
 
 Choose one:
 
-- 🔵 Table Filling  
-- 🟣 Partition Refinement
+-  Table Filling  
+-  Partition Refinement
 
 <img src="https://github.com/user-attachments/assets/10abfb06-aac9-4784-b667-47a2b377f313"/>
 
-**🧠 Algorithms Explained**
+** Algorithms Explained**
 
-## 🔵 Table Filling Algorithm
+##  Table Filling Algorithm
 
 - Create a matrix of state pairs  
 - Mark pairs where one is final and other is not  
 - Propagate markings using transitions  
 - Unmarked pairs are equivalent  
 
-## 🟣 Partition Refinement Algorithm (Hopcroft)
+##  Partition Refinement Algorithm (Hopcroft)
 
 - Start with two groups:
   - Final states
@@ -167,7 +178,7 @@ Click **"Minimize DFA"**
 
 <img src="https://github.com/user-attachments/assets/302a6db3-7617-4010-be2e-77c2f416dfbd"/>
 
-👉 System will:
+ System will:
 - Show step-by-step process  
 - Highlight comparisons  
 - Build equivalence classes  
