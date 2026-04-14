@@ -6,20 +6,20 @@
 
 # 🌐 Live project URL
 
-👉[https://dfa-minimizer-nitinkumar-2024ucs1534.netlify.app/](https://dfa-minimizer-nitinkumar-2024ucs1534.netlify.app/)
+[https://dfa-minimizer-nitinkumar-2024ucs1534.netlify.app/](https://dfa-minimizer-nitinkumar-2024ucs1534.netlify.app/)
 
 ---
 
 #  Features
 
-- 🔵 Table Filling Algorithm (Myhill–Nerode)
-- 🟣 Partition Refinement Algorithm (Hopcroft)
-- 🎯 Step-by-step DFA minimization
-- 🌐 Interactive 2D DFA visualization
-- 🌌 3D DFA visualization
-- 🔍 String pattern simulator (accept/reject)
-- 📊 Original vs Minimized DFA comparison
-- 📤 Export DFA as PNG & JSON
+- Table Filling Algorithm (Myhill–Nerode)
+-  Partition Refinement Algorithm (Hopcroft)
+-  Step-by-step DFA minimization
+- Interactive 2D DFA visualization
+-  3D DFA visualization
+-  String pattern simulator (accept/reject)
+-  Original vs Minimized DFA comparison
+-  Export DFA as PNG & JSON
 
 ---
 
@@ -36,14 +36,14 @@ DFA-Minimizer-Visualizer/
 
 ```
 
-## ⚙️ How to Run the Project
+##  How to Run the Project
 
 Follow these steps to run the project on your system 👇
 
 ### 1️⃣ Download / Clone Project
 
 ```bash
-git clone https://github.com/your-username/dfa-minimizer-visualizer.git
+git clone https://github.com/nitinkumar292006/dfa-minimisation-visualizer.git
 ```
 
 ### 2 Open index.html in your browser
@@ -54,7 +54,7 @@ git clone https://github.com/your-username/dfa-minimizer-visualizer.git
 
 ##  Example Walkthrough
 
-### 🔹 Input DFA
+###  Input DFA
 
 - **States:** A, B, C, D  
 - **Alphabet:** 0, 1  
@@ -63,7 +63,7 @@ git clone https://github.com/your-username/dfa-minimizer-visualizer.git
 
 ---
 
-## 🔁 Transition Table
+##  Transition Table
 
 | State | 0 | 1 |
 |------|---|---|
@@ -80,16 +80,16 @@ This project provides **two flexible ways** to create a DFA:
 
 ---
 
-## 🧾 1. Transition Table Mode
+##  1. Transition Table Mode
 
-👉 Users can manually define DFA using a structured table.
+ Users can manually define DFA using a structured table.
 
 ### Steps:
 - Enter states, alphabet, start state, and final states  
 - Click **"Build Transition Table"**  
 - Fill transition values for each state  
 
-📌 Best for:
+ Best for:
 - Theory-based problems  
 - Exam practice  
 - Precise DFA definition  
@@ -98,18 +98,18 @@ This project provides **two flexible ways** to create a DFA:
 
 ---
 
-## 🎨 2. Canvas Draw Mode (Interactive)
+##  2. Canvas Draw Mode (Interactive)
 
-👉 Users can visually create DFA by drawing directly on canvas.
+ Users can visually create DFA by drawing directly on canvas.
 
 ### Features:
-- ➕ Add states  
-- ✅ Mark final states  
-- ➡️ Draw transitions between states  
-- ❌ Delete elements  
-- 🔄 Clear canvas  
+-  Add states  
+-  Mark final states  
+-  Draw transitions between states  
+-  Delete elements  
+-  Clear canvas  
 
-📌 How it works:
+ How it works:
 1. Click **"+ State"** to add nodes  
 2. Click **"+ Final State"** to mark accepting states  
 3. Use **"→ Transition"** to connect states  
@@ -148,8 +148,8 @@ We Use First input method Transition table
 
 Choose one:
 
-- 🔵 Table Filling  
-- 🟣 Partition Refinement
+-  Table Filling  
+-  Partition Refinement
 
 <img src="https://github.com/user-attachments/assets/10abfb06-aac9-4784-b667-47a2b377f313"/>
 
@@ -178,7 +178,7 @@ Click **"Minimize DFA"**
 
 <img src="https://github.com/user-attachments/assets/302a6db3-7617-4010-be2e-77c2f416dfbd"/>
 
-👉 System will:
+ System will:
 - Show step-by-step process  
 - Highlight comparisons  
 - Build equivalence classes  
