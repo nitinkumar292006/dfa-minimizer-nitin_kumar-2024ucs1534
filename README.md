@@ -6,7 +6,7 @@
 
 # 🌐 Live project URL
 
-👉 https://your-username.github.io/dfa-minimizer-visualizer
+👉[https://dfa-minimizer-nitinkumar-2024ucs1534.netlify.app/](https://dfa-minimizer-nitinkumar-2024ucs1534.netlify.app/)
 
 ---
 
