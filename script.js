@@ -149,6 +149,9 @@ function buildTable() {
     });
     html += '</tbody></table>';
     wrap.innerHTML = html;
+
+    const algoSec = document.getElementById('algo-section');
+    if (algoSec) algoSec.style.display = 'block';
 }
 
 // ==================== PARSE DFA ====================
@@ -740,17 +743,81 @@ function renderPartition(container, step) {
 }
 
 // ==================== MAIN MINIMIZE ====================
+
+function buildDFAFromCanvas() {
+    if (!drawStates.length) return null;
+
+    const states = drawStates.map(s => s.name);
+    const start = drawStates[0]?.name;
+
+    const finals = drawStates
+        .filter(s => s.final)
+        .map(s => s.name);
+
+    const alpha = [...new Set(drawEdges.map(e => e.sym))];
+
+    const transitions = {};
+
+    states.forEach(s => {
+        transitions[s] = {};
+    });
+
+    drawEdges.forEach(e => {
+
+        if (!transitions[e.from]) {
+            transitions[e.from] = {};
+        }
+
+        // ⚠ overwrite warning (debug)
+        if (transitions[e.from][e.sym]) {
+            console.warn(`Overwriting: ${e.from} --${e.sym}--> ${transitions[e.from][e.sym]} with ${e.to}`);
+        }
+
+        transitions[e.from][e.sym] = e.to;
+    });
+
+    return {
+        states,
+        alpha,
+        start,
+        finals,
+        transitions
+    };
+}
+
+function validateCanvasDFA(d) {
+        for (let s of d.states) {
+            for (let a of d.alpha) {
+
+                if (!d.transitions[s] || d.transitions[s][a] === undefined) {
+                    alert(`❌ Missing transition: δ(${s}, ${a})`);
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
 function startMinimization() {
 
     clearSim();
 
     const isRegexMode = document.getElementById('tab-regex').classList.contains('active');
+    const isDrawMode = document.getElementById('tab-draw').classList.contains('active');
 
     let localDFA;
 
-    if (isRegexMode && window.regexDFA) {
+    if (isDrawMode) {
+        localDFA = buildDFAFromCanvas();
+
+        if (!validateCanvasDFA(localDFA)) {
+            return;
+        }
+    }
+    else if (isRegexMode && window.regexDFA) {
         localDFA = JSON.parse(JSON.stringify(window.regexDFA));
-    } else {
+    }
+    else {
         localDFA = parseDFA();
     }
 
@@ -1195,18 +1262,78 @@ function redrawCanvas() {
         c.strokeStyle = 'rgba(99,179,237,0.6)';
         c.lineWidth = 1.5;
         if (from === to) {
-            c.arc(from.x, from.y - 30, 15, 0, Math.PI * 2);
+            const loopX = from.x;
+            const loopY = from.y - 30;
+
+            // draw loop
+            c.arc(loopX, loopY, 15, 0, Math.PI * 2);
+
+            // 🔥 LABEL FIX
+            c.fillStyle = '#94a3b8';
+            c.font = '11px Space Mono, monospace';
+            c.textAlign = 'center';
+
+            c.fillText(e.sym, loopX, loopY - 20);
         } else {
+            // 🔥 CURVE FIX
+            const dx = to.x - from.x;
+            const dy = to.y - from.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            // midpoint
+            const mx = (from.x + to.x) / 2;
+            const my = (from.y + to.y) / 2;
+
+            // perpendicular offset
+            const offset = 40;
+
+            const cx = mx - (dy / dist) * offset;
+            const cy = my + (dx / dist) * offset;
+
             c.moveTo(from.x, from.y);
-            c.lineTo(to.x, to.y);
+            c.quadraticCurveTo(cx, cy, to.x, to.y);
+
+            // save for label later
+            e._curve = { cx, cy };
         }
         c.stroke();
         // Arrow
         if (from !== to) {
-            const dx = to.x - from.x, dy = to.y - from.y;
-            const len = Math.sqrt(dx * dx + dy * dy);
-            const ex = to.x - dx / len * 26, ey = to.y - dy / len * 26;
-            const angle = Math.atan2(dy, dx);
+            // 🔥 CURVE BASED ARROW FIX
+
+            let angle, ex, ey;
+
+            if (e._curve) {
+                // curve ke end ka tangent use karenge
+                const t = 0.9; // near end point
+
+                const x1 = from.x;
+                const y1 = from.y;
+                const cx = e._curve.cx;
+                const cy = e._curve.cy;
+                const x2 = to.x;
+                const y2 = to.y;
+
+                // derivative of quadratic bezier
+                const dx = 2 * (1 - t) * (cx - x1) + 2 * t * (x2 - cx);
+                const dy = 2 * (1 - t) * (cy - y1) + 2 * t * (y2 - cy);
+
+                angle = Math.atan2(dy, dx);
+
+                // arrow position थोड़ा पीछे
+                ex = x2 - Math.cos(angle) * 26;
+                ey = y2 - Math.sin(angle) * 26;
+
+            } else {
+                const dx = to.x - from.x;
+                const dy = to.y - from.y;
+                const len = Math.sqrt(dx * dx + dy * dy);
+
+                angle = Math.atan2(dy, dx);
+
+                ex = to.x - dx / len * 26;
+                ey = to.y - dy / len * 26;
+            }
             c.beginPath();
             c.moveTo(ex, ey);
             c.lineTo(ex - 10 * Math.cos(angle - 0.4), ey - 10 * Math.sin(angle - 0.4));
@@ -1215,10 +1342,20 @@ function redrawCanvas() {
             c.strokeStyle = 'rgba(99,179,237,0.8)';
             c.stroke();
             // Label
-            const mx = (from.x + to.x) / 2, my = (from.y + to.y) / 2;
+
             c.fillStyle = '#94a3b8';
             c.font = '11px Space Mono, monospace';
-            c.fillText(e.sym, mx + 5, my - 5);
+            let lx, ly;
+
+            if (e._curve) {
+                lx = e._curve.cx;
+                ly = e._curve.cy;
+            } else {
+                lx = (from.x + to.x) / 2;
+                ly = (from.y + to.y) / 2;
+            }
+
+            c.fillText(e.sym, lx + 5, ly - 5);
         }
     });
 
