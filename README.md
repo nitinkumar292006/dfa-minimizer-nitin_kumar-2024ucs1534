@@ -1,4 +1,4 @@
-# 🚀 DFA Minimizer & Visualizer
+# DFA Minimizer & Visualizer
 
 > A modern interactive web tool to **minimize Deterministic Finite Automata (DFA)** with step-by-step visualization, simulation, and 3D rendering.
 
@@ -10,7 +10,7 @@
 
 ---
 
-# ✨ Features
+#  Features
 
 - 🔵 Table Filling Algorithm (Myhill–Nerode)
 - 🟣 Partition Refinement Algorithm (Hopcroft)
@@ -52,7 +52,7 @@ git clone https://github.com/your-username/dfa-minimizer-visualizer.git
 
 # ⚙️ How to Use the WebApp (Step-by-Step)
 
-## 🧪 Example Walkthrough
+##  Example Walkthrough
 
 ### 🔹 Input DFA
 
@@ -74,7 +74,7 @@ git clone https://github.com/your-username/dfa-minimizer-visualizer.git
 
 ---
 
-# 🎨 Input Modes (Dual Input System)
+# Input Modes (Dual Input System)
 
 This project provides **two flexible ways** to create a DFA:
 
@@ -121,8 +121,6 @@ This project provides **two flexible ways** to create a DFA:
 ---
 
 
-
-
 # ▶️ Steps to Use Website
 We Use First input method Transition table
 
@@ -155,16 +153,16 @@ Choose one:
 
 <img src="https://github.com/user-attachments/assets/10abfb06-aac9-4784-b667-47a2b377f313"/>
 
-**🧠 Algorithms Explained**
+** Algorithms Explained**
 
-## 🔵 Table Filling Algorithm
+##  Table Filling Algorithm
 
 - Create a matrix of state pairs  
 - Mark pairs where one is final and other is not  
 - Propagate markings using transitions  
 - Unmarked pairs are equivalent  
 
-## 🟣 Partition Refinement Algorithm (Hopcroft)
+##  Partition Refinement Algorithm (Hopcroft)
 
 - Start with two groups:
   - Final states
